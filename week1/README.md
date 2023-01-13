@@ -395,3 +395,213 @@ This is a simple form of race condition: unctrolled access to a shared variable
 - all processes share global variables
 - willy nilly access to global variables can cause race conditions
 - Arbitrate access to global variables through locks (semaphores in Xinu)
+
+## 1.7 Computer Organization Review, Part 1: The CPU
+([top](#directory))
+
+### Overview
+
+- instruction set architecture (ISA)
+- Instruction execution core
+- registers
+- processor mode
+- fetch/decode/execute cycle
+- abstraction
+
+### What is an instruction
+- atomic unit of computing
+- operation code (opcode) and arguments
+- examples
+  - ADD: add two numbers together
+  - MOV: copy data
+  - CMP: compare two values
+  - JMP: transfer control to a differnt locaiton
+- arguments can be registers, memory locations, or constants
+- instruction set architecture = instructions + addressing modes
+
+### Example of Assembly Code
+
+```c
+int x=0, y=3;
+main()
+{
+  x=y+5;
+}
+```
+
+```asm
+.data
+varx: .word 0
+vary: .word 3
+lw $v1, vary
+li $v2, 5
+add $v3, $v1, $v2
+sw $v3, varx
+```
+
+### Registers
+- individually named word-sized blocks of memory integrated into the CPU
+- ~16-32 of them on a typical CPU
+- some are general-purpose: used to hold intermediate parts of computation, pointer, etc
+  - ($v1, $v2, and $v3 from prior example)
+- some are special-purpose: control operation of the CPU, memory, etc
+
+
+### Special-purpose registers
+- note that some architectures do not have all of these and some allow them to be used optionsally
+
+---
+- stack pointer (SP)
+- frame pointer (FP)
+- instruction pointer/program counter (IP or PC)
+- program status register/processor status word (PSR or PSW)
+
+### Fields in the Arm A8 PSR
+- bits set by arithetic and logical operations:
+  - negative (N)
+  - zero (Z)
+  - Cary (C)
+  - overflow (O)
+- control bits:
+  - disable interrupts (F,I)
+  - mode bits
+    - user/supervisor/system/handling IRQ/...
+  - most OS just use two
+
+<img src="/week1/images/arm8psr.png" width=500/>
+
+### Processor Mode
+- every processor has mode bits in the PSW
+- some instruction can be used on in certain prcoessor modes
+- most OS use only two of them:
+  - nonprivileged (aka user mode)
+  - privileged (aka kernel or system mode)
+- your web browser runs in user mode
+- OS runs in system mode
+
+### Fetch/Decode/Execute
+- Every cycle, control unit fetches an instruction from RAM (or from L1 cache)
+- where in RAM? Where the IP points.
+- Instruction is decoded to determine the opcode and the arguments
+- instruction is then executed
+  - if not a control instruction, IP advanced to next instruction (adjacent in memory)
+  - if a control instruction, IP set to target of control.
+
+### Abstraction in Action
+- processor don't directly implement instructions
+- instead, individual instructions are implemented in a lower-level machine code called microcode
+- thus, what we see as the ISA is really an abstraction built on the core hardware through a software layer
+
+### Summary
+- instructions are the fundamental building blocks of programs
+  - implemented as microcode
+- registers are on-CPU, single-word blocks of memory
+  - general and special purpose
+- processor hsa (at least) high- and low-privilege modes
+- Fetch/decode/execute cycle
+
+## 1.8 Computer Organization Review, Part 2: The Bus
+([top](#directory))
+
+<img src='/week1/images/bus.png' width=500>
+
+### Bus Attributes
+- shared
+  - think of a high-speed, single lane highway
+  - one message at a time (avoid collisions)
+    - bus arbitration
+  - anyone can talk to anyone
+- broadcast
+  - every module sees all messages
+  - hierarchical
+    - modules can be other buses (eg USB)
+
+- shared communication channel
+
+### Bus Communication
+- each module has an address on the bus
+  - like sending a letter through the post service
+  - lik email address, url, phone number
+- usually we expect the processor to initiate a request or action
+- how can the processor do this?
+  - modules have their own registers that control actions
+  - cpu writes command and argument to device registers
+  - each device (or type of device) has its own rules
+
+### Two ways to issue commands
+- special instructions
+  - some architectures have special I/O instructions that send the command to an I/O port address
+- memory-mapped I/O
+  - map device registers into CPU's address space
+  - looks like regular memory
+  - can just assign values into the register like any other variable eg `*drp=0xFF00`
+    - remember example of assembly code for = operator
+  - Requires hardware support in the MMU
+
+### The Fetch/Store Paradigm
+- memory-mapped I/O is an example of the fetch/store paradigm
+- CPU treats the bus as memory, with two operations
+  - fetch: read value from address given
+  - store: write value to address given
+- thus, all device registers, and all RAM locations, are mapped into the CPU's address space
+
+### Bus Address Space
+- how many bits are in a bus address?
+  - typically 32 to 64 ($2^{32}$=4gigs)
+  - byte-addressable: each address refers to one byte
+- how many are in use?
+  - each device has a small range of addresses
+  - RAM (512MB on beaglebone black)
+  - ROM (hold startup code)
+- Accessing an unused address causes error
+
+### Bus Attributes
+<img src='/week1/images/busCPU.png' width=500>
+
+- or read from memory
+
+
+### Direct Memory Acces (DMA)
+- involving the CPU in every operation is inefficient
+- consider reading a block from disk to memory
+- Faster if the disk simply puts the block in memory tells the CPU whent it's done
+- == direct memory access
+- systems can have multiple buses, and the CPU, memory, and DMA controller might be on a separate bus from other devices
+
+### DMA Example step one
+
+<img src='/week1/images/busDMA1.png' width=500>
+
+- the prcoess requests a block from the disk 
+(must tell disk where in RAM to but the data)
+
+<img src='/week1/images/busDMA2.png' width=500>
+
+### Checking device status
+- how does the CPU know
+  - a device has finished an operation?
+  - a device is ready for another operation
+- method 1: polling
+- method 2: interrupts
+
+### Polling
+
+- CPU repeatedly reads device status register
+- looking to see if idle bit is set
+- very expensive in terms of processor time
+  - busy waiting
+- some devices demand fast attention
+  - small buffers
+  - data can arrive without being requested
+    - keyboard
+
+### Alternative: Interrupts
+- devices can tell the CPU they're finished or ready for more work
+- CPU doesn't have to keep checking
+- ergo can work on other things
+- urgen data can be processed quickly after they arrive
+- devices can interrupt when the CPU doesn't expect it
+- consider network interface
+
+### DMA Example, Step Three
+<img src='/week1/images/busDMA3.png' width=500>
