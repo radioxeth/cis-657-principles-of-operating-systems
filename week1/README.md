@@ -663,7 +663,7 @@ Final/Midterm
 - reboot the os everytime we change the system calls
 
 
-#### Proces
+#### Proccess
 - os abstraction
 - created by os system call
 - managed by OS, unkown to hardward
