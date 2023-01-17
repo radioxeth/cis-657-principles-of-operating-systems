@@ -605,3 +605,88 @@ sw $v3, varx
 
 ### DMA Example, Step Three
 <img src='/week1/images/busDMA3.png' width=500>
+
+
+## Live Session
+
+*Design and implementation of operating systems.*
+
+Office Hours
+- 6pm EST office hours
+
+
+
+Book(s)
+- Douglas Comer: Operating System Design: The Xinu Approach, 2nd edition
+- PDF book: optional, basics of computers for non-technical folks
+
+Labs
+- dificulty
+  - a lot of freedom
+- submit before the deadline, that's it
+  - bear minimm
+- 11pm Eastern Time
+
+Final/Midterm
+- this is the grade
+- basically copy paste from the lab
+- Feb 27, March 27
+
+### Submission Policy
+1. one single pdf file
+2. single video file
+   - zoom
+   - not syracuse zoom (they disabled the download)
+   - .mp4
+3. one single zip folder
+
+4. zipped file
+
+### Lecture
+#### Scope
+- this is a course about the design and structure of operating systems
+- Abstraciton!
+
+#### Why xinu?
+
+- unix backwards
+- complete system
+- oprating system
+- small
+- elegent
+- powerful
+- practical
+
+
+#### What is an operating system?
+- we write system calls, not programs
+- reboot the os everytime we change the system calls
+
+
+#### Proces
+- os abstraction
+- created by os system call
+- managed by OS, unkown to hardward
+  - operates concurrently
+  - (round robin)
+
+
+#### process vs function
+- we write processes in operating systems,
+- not functions
+
+```c
+create(resume(process, size_of_memory, priority, name_of_process, number_of_arguments));
+```
+
+```c
+main()
+```
+is a process
+if nothing prevents a process from terminating, the process will terminate.
+
+
+#### null process
+- user domain is nothing
+- main.c is terminated
+  - for loop with nothing inside.
