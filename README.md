@@ -3,8 +3,8 @@
 
 ## Table of Contents
 - [Home](/README.md#table-of-contents)
-- **[Week 1 Introduction and Review, Concurrency, and Shared Memory](/week1/README.md#week-1-introduction-and-review-concurrency-and-shared-memory)**
-- [Week 2 Lists and Queues](/week2/README.md#week-2-lists-and-queues)
+- [Week 1 Introduction and Review, Concurrency, and Shared Memory](/week1/README.md#week-1-introduction-and-review-concurrency-and-shared-memory)
+- **[Week 2 Lists and Queues](/week2/README.md#week-2-lists-and-queues)**
 - [Week 3 CPU Scheduling](/week3/README.md#week-3-cpu-scheduling)
 - [Week 4 Process Coordination](/week4/README.md#week-4-process-coordination)
 - [Week 5 Memory Management](/week5/README.md#week-5-memory-management)
