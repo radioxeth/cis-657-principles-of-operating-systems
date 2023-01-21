@@ -139,3 +139,377 @@ sw $v3, varx <--PC
 - interrupt number used as index to interrupt vector
 - handler called
 - state restored and process resumed after handling interrupt
+
+## 2.3 Fundamental OS Data Structures
+([top](#directory))
+
+### Lists and Queues
+- Two fundamental data structures in OS
+- lists of free memory regions
+- queues of resource requests
+- timer queues
+- queues of prcoesses
+  - ready queue
+  - processes waiting on a resource
+
+## Example in Xinu: process Lists
+- doubly ended (explicit head, tail nodes)
+- doubly linked (prev, next pointers)
+- sequential access
+  - only one process manipulates list at a time
+  - enforced through locking
+- single data structure used throughout the OS
+- other OS have multiple types of process lists/queues (for example FreeBSD)
+
+## Process Lists II
+- Node stores two items
+  - key
+  - Process ID
+- Either FIFO or sorted by descending Key
+- A list node:
+
+|Previous|PID|Key|Next|
+|-|-|-|-|
+|&larr;|-|-|&rarr;|
+
+### Sample List
+<img src='/week2/images/sampleList.png' width=500/>
+
+- keys in descending order
+- PID in each entry
+- HEAD->prev and TAIL->next are both NULL
+
+### Empty List
+
+<img src='/week2/images/emptyList.png' width=500/>
+
+- empy list has just head/tail nodes
+- trade-off of space time
+  - simplifies checking for empty list
+  - removes source of errors
+
+
+### Trade-offs
+
+- space/time trade-off in lists is an example of fundamental pattern in OS design
+- rarely is there one optimal choice
+- often deciding to emphasize on characterstic over another
+  - space vs time
+  - different choices at different points of design
+  - system features influence choice (eg large vs small memoery, target environment)
+
+### Example of Influence of System Features
+- dumb phones had dedicated, simple OS
+- smartphones required new features
+- european industry standardization on a new smartphone OS (symbian)
+- us industry adapted two desktop OSs
+   - both run the same browsers
+   - iPhone 3GS = cray X-MP (super computer form 1960s)
+
+
+## 2.4 Xinu queue.h
+([top](#directory))
+
+### Constants and Data Structures
+
+
+- xinu has a fixed array length defined at compile time
+
+```c
+/* default # of queue entries: 1 per process plus 2 for ready
+ list plus 2 for sleep list plus 2 per semaphore */
+#ifndef NQENT
+#define NQENT (NPROC+4+NSEM+NSEM)
+#endif
+
+#define EMPTY (-1)       /* null value fo qnext or qprev index */
+#define MAXKEY 0x7FFFFFF /* max key that can be stored in queue */
+#define MINKEY 0x8000000 /* min key that can be stored in queue */
+
+struct query { // one per process plus two per list
+  int32 qkey;  // key on which  the queue is ordered
+  qid16 qnext; // index of next precess or tail
+  qid16 qprev; // index of previous process or head
+};
+
+extern struct qentry queuetab[];
+```
+
+### inline queue manipulation
+
+- processId is implicit
+  - processId is the same as the entry in the queue table
+
+```c
+// inline q manipulation functions
+
+#define queuehead(q) (q)
+#define queuetail(q) (q)
+#define firstid(q)   (queuetab[queuehead(q)].qnext)
+#define lastid(q)    (queuetab[queuehead(q)].qprev)
+#define isempty(q)   (firstid(q) >= NPROC)
+#define nonempty(q)  (firstid(q) <  NPROC)
+#define firstkey(q)  (queuetab[firstid(q)].qkey)
+#define lastkey(q)   (queuetab[ lastid(q)].qkey)
+
+/* inline to check queue id assumes interrups are disabled */
+
+#define isbadqid(x)  (((int32)(x) < 0) || (int32)(x) >= NQENt-1)
+```
+
+### Key Points
+- The inline queue manipulation functions are extremely efficient
+- because there are no null pointers, queues will always have first and last items (the first item might be the tail, and the last item the head, they'll be there!)
+- This justifies the trade-off of additional space used in the queue table
+
+## 2.5 List Implementation 
+([top](#directory))
+
+### Didn't we already cover this?
+- the prior unit described abstract or conceptual lists in Xinu
+- The concrete implementation differs in two ways
+  - relative pointers
+  - implicit data structure
+- This optimization is an example of a trade-off
+- xinu is for embedded systems (internet of things)
+
+### Relative Pointers
+- Embedded systems generally have a small number of processes
+- NPROC in Xinu typically < 100 (default is 8)
+- PID range from 0 to NPROC-1
+- use PID as array index
+- desktop OS use much larger PID space
+- trade-off: reuse vs indexing time
+
+### Implicit Data Structure
+- Key observation: A process (in Xinu) appears on only one list at a time
+- Obviates need for PID in list node
+- Use array implementation
+- ${i^{th}}$ element of the array is for PID *i*
+- Inserting node 3 in the list == putin PID 3 in the list
+
+### Array Implementation
+key in descending order
+
+|idx|key|prev|next|
+|-|-|-|-|
+|0||||
+|1||||
+|2|14|4|61|
+|3||||
+|4|25|60|2|
+|...||||
+|NRPOC-1||||
+|...||||
+|60 (HEAD)|MAXKEY|-|4|
+|61 (TAIL)|MINKEY|2|-|
+
+- each row corresponds to 1 process
+- each pair of rows is head/tail of 1 list
+<img src='/week2/images/arrayImplementation.png' width=500>
+
+## 2.6 FreeBSD Lists and Queues
+([top](#directory))
+
+### An Alternative Approach to Queues
+- Traditional pointer-based lists
+- Singly linked lists
+- Doubly linked lists
+- Singly linked tail queues
+- Doubly linked tail queues
+
+### Singly Linked Lists
+- Single head pointer
+- Only forward traversal (only forward pointers)
+- Insert at head, or insert after existing item
+- Memory efficient
+- O(n) cost for iten removal
+- Best used for 
+  - LIFO queue (stack)
+  - Datasets for few removals
+
+### Singly Linked Tail Queue
+- pointer to head and tail
+- only forward traversal (no back pointers)
+- Memory efficient
+- O(n) cost for item removal
+- Insertion options
+  - Head of queue
+  - After existing element
+  - Tail of queue
+- Best use: FIFO queue
+
+### Lists
+- Head pointer (no tail pointer)
+- Doubly linked list
+- 2x memory overhead
+- O(1) removal cost
+- Insertion
+  - Head of list
+  - before or after any existing item
+- Still traversed only in forward direction
+
+### Tail Queue
+- (similar to Xinu implementation)
+- Head and tail pointers
+- Doubly linked lists
+- 2x memory cost
+- O(1) removal
+- Insertion
+  - Head of list
+  - Before or after any existing item
+  - tail of list
+- can be traversed in either direction (finally!)
+
+## 2.7 Basic Queue Extraction
+([top](#directory))
+
+(xinu queues)
+
+### Three Extractoin Functions
+- `getfirst()` remove and return head of the list
+- `getlast()` remove and return tail of the list
+- `getitem()` remove and return a specific process from a list (no searching required)
+
+### `getfirst()`
+
+```c
+// getfirst - remove a proess from the front of a queue
+
+pid31 getfirst(
+  qid16  q       // id of queue from which to remove a process (assumed vali with no check)
+){
+  pid32 head;
+  if(isempty(q)){
+    return EMPTY;
+  }
+  head = queuehead(q);
+  return getitem(queuetab[head].qnext);
+}
+```
+
+### `getlast()`
+
+```c
+// getlast - remove a proess from the end of a queue
+
+pid31 getlast(
+  qid16  q       // id of queue from which to remove a process (assumed vali with no check)
+){
+  pid32 tail;
+  if(isempty(q)){
+    return EMPTY;
+  }
+  tail = queuetail(q);
+  return getitem(queuetab[tail].qprev);
+}
+```
+
+### `getitem()`
+
+```c
+// getitem - remove a proess from an arbitrary point in the queue
+
+pid31 getitem(
+  pid32  pid       // ID of process to remove
+){
+  pid32 prev, next;
+  
+  next = queuetab[pid].qnext; //following node in list
+  prev = queuetab[pid].qprev; //previous node in list
+  queuetab[prev].qnext = next;
+  queuetab[next].qprev = prev;
+  return pid;
+}
+```
+
+- remove next and prev pointers from pid node at a higher level.
+
+## 2.8 FIFO Queue Manipulation
+([top](#directory))
+
+### What is a FIFO Queue?
+- first in first out
+  - also called first come first served (FCFS)
+- The basic queue type
+  - Banks
+  - Grocery stores
+  - lines
+
+### Two Routines
+- `enqueue()`
+  - insert item at the tail of the list
+- `dequeue()`
+  - remove and return item from head of the list
+- neither is truly limited to FIFO queues
+  - eg `dequeue()` can be used on any queues to return and remove the first item
+  - uses `getfirst() and cleans up the the entry
+
+### Starting Queue (one item)
+<img src='/week2/images/oneItemQueue.png' width=500/>
+
+- don't care what the key is, do not specify it
+
+<img src='/week2/images/oneItemQueueConcrete.png' width=500/>
+
+`enqueue(2,60)`
+
+### `enqueue()`
+
+```c
+// enqueue - insert a process at the tail of a queue
+
+pid32 enqueue(
+  pid32    pid //process id to insert
+  pid16    q   //queue id to use
+)
+{
+  qid16 tail, prev; // tail and prev node indexes
+
+  if(isbadqid(q)||isbadpid(pid)){
+    return SYSERR;
+  }
+
+  tail = queuetail(q); //time saver, compute once
+  prev = queuetab[tail].qprev; //queuetab[tail] always valid
+
+  queuetab[pid].qnext = tail; //insert just before the tail node
+  queuetab[pid].qprev = prev;
+  queuetab[prev].qnext = pid;
+  queuetab[tail].qprev = pid;
+
+  // link in the new item just ahead of the tail.
+  // note that prev could be head 
+  // (if the queue were empty before)
+  return pid;
+}
+```
+
+### `dequeue()`
+
+```c
+//dequeue  -remove and return the first process on a list
+
+pid32 dequeue(
+  qid16        q //id queue to use
+){
+  pid32 pid; //id of process removed
+
+  // check error
+  if (isbadqid(q)){
+    return SYSERR;
+  } else if (isempty(q)){
+    return EMPTY;
+  }
+
+  pid = getfirst(q);
+  // have to clean up the pid node
+  // clean up for security and errors
+  // could point to information we don't want to reveal
+  queuetab[pid].qprev = EMPTY;
+  queuetab[pid].qnext = EMPTY;
+  return pid;
+}
+```
+
+
