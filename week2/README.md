@@ -512,4 +512,158 @@ pid32 dequeue(
 }
 ```
 
+## 2.9 Priority Queue Manipulation
+([top](#directory))
 
+### What is a Priority Queue?
+
+- each item as a key value, and the queue is sorted on those values
+- thus, insertion might be in the midle of the queue
+- Contrast with FIFO
+
+### `insert()`
+
+```C
+// insert - insert a process into a queue in descending key order
+
+status insert (
+  pid32     pid, // Id of process to insert
+  qid16     q,   // ID of queue to use
+  int32     key, // key for the inserted process
+){
+  int 16 curr; // runs through items in a queue
+  int 16 prev; // hold previous node index
+
+  if (isbadqid(q) || isbadpid(pid)){
+    return SYSERR;
+  }
+
+  curr = firstid(q);
+  while (queuetab[curr].qkey >= key){
+    curr = queuetab[curr].qnext;
+  }
+
+  // insert process between curr node and previous node
+  prev = queuetab[curr].qprev; // get index of previous node
+  // need to inser new intem before prev and curr
+  // link process into the queue
+  queuetab[pid].qnext = curr;
+  queuetab[pid].qprev = prev;
+  // set the queue
+  queuetab[pid].qkey = key;
+  // update prev link for following node
+  queuetab[prev].qnext = pid;
+  // update next link for prior node
+  queuetab[curr].qprev = pid;
+  return OK;
+}
+```
+
+## 2.10 Xinu List Initialization
+([top](#directory))
+
+### Desing Guideline: Consider Initialization Last
+
+- it is done only once
+- queue will be used repeatedly
+
+> **Optimize the expected case**
+
+- in Xinu, queues are never deleted or freed
+- Same initialization for all types of queues
+
+### Design Assumptions
+- head and tail of queue are in adjacent array slots
+- simplifies storage requirements
+- we saw this in queue.h
+```c
+#define queuehead(q) (q)
+#define queuetail(q) ((q) + 1)
+```
+
+### `newqueue()` Part I
+
+```c
+#include <xinu.h>
+
+// newqueue - allocate and initialze a queue in the global queue table
+
+qid16 newqueue(void)
+{
+  static qid16 nextqid = NPROC; // next list in queuetab to use
+  // static means scope is local, storage is global (persists)
+  // static variables are stored on the heap
+  qid16        q;               // id of allocated queue
+
+  q = nextqid;
+  if (q >= NQENT) { //check for table overflow
+    return SYSERR;
+  }
+}
+
+```
+
+### Xinu vs FreeBSD/Linux and So On
+
+- All are time-sharing systems
+  - but have different expected workloads
+- xinu is for embedded systems
+  - small number of processes 
+  - most parameters determined at build time
+- FreeBSD et all are for interactive sysmtes
+  - desktop servers
+  - dynamic workloads
+
+## What's your point?
+- notice how Xinu allocates queues
+- parameters of Xinu defined statically at build time
+  - size of process table
+  - number of queues
+- some other systems will dynamically resize tables when they fill
+- xinu stresses simplicity and elegance for learning purposes
+
+### `newqueue()` Part II
+
+```c
+nextqid +=2; //incrememtn index for next call
+
+//initialize head and tail nodes to form an empty queue
+queuetab[queuehead(q)].qnext = queuetail(q);
+queuetab[queuehead(q)].qprev = EMPTY;
+queuetab[queuehead(q)].qkey = MAXKEY;
+queuetab[queuetail(q)].qnext = EMPTY;
+queuetab[queuetail(q)].qprev = queuehead(q);
+queuetab[queuetail(q)].qkey = MINKEY;
+return q;
+```
+
+### `newqueue()` Full
+```c
+#include <xinu.h>
+
+// newqueue - allocate and initialze a queue in the global queue table
+
+qid16 newqueue(void)
+{
+  static qid16 nextqid = NPROC; // next list in queuetab to use
+  // static means scope is local, storage is global (persists)
+  // static variables are stored on the heap
+  qid16        q;               // id of allocated queue
+
+  q = nextqid;
+  if (q >= NQENT) { //check for table overflow
+    return SYSERR;
+  }
+  nextqid +=2; //incrememtn index for next call
+
+  //initialize head and tail nodes to form an empty queue
+  queuetab[queuehead(q)].qnext = queuetail(q);
+  queuetab[queuehead(q)].qprev = EMPTY;
+  queuetab[queuehead(q)].qkey = MAXKEY;
+  queuetab[queuetail(q)].qnext = EMPTY;
+  queuetab[queuetail(q)].qprev = queuehead(q);
+  queuetab[queuetail(q)].qkey = MINKEY;
+  return q;
+}
+
+```
