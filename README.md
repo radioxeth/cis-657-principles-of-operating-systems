@@ -1,6 +1,8 @@
 # CIS 657 Principles of Operating Systems
 ## cis-657-principles-of-operating-systems
 
+This course designs and implements changes to the Xinu operating system, found [here](https://github.com/radioxeth/xinu-shared).
+
 ## Table of Contents
 - [Home](/README.md#table-of-contents)
 - [Week 1 Introduction and Review, Concurrency, and Shared Memory](/week1/README.md#week-1-introduction-and-review-concurrency-and-shared-memory)
