@@ -667,3 +667,68 @@ qid16 newqueue(void)
 }
 
 ```
+
+
+## Week 2 Live Session
+([top](#directory))
+
+### Paper Requirements Overview
+- Pick a topic and problem
+- research exisiting knowledge
+- propose a solution
+  - (try a hybrid solution)
+- implement the solution
+
+- Paper due week 9
+- We will all present in week 10
+  - power point presentation
+
+- ideas:
+  - OS optimized for IPFS
+  - distributed file system
+
+### Lecture
+
+Higher priority only see A if process has higher priority
+- limited resources cause priority miscues
+
+### Queues and Lists
+- fundamental for OS
+- Various forms
+  - fifo
+  - priority lists
+  - ascending and descending
+
+### Lists and Queues in Xinu
+- need a PI
+- all lists are doubly linked lists
+- -1 is a nonapplicable pointer in the head
+
+- head
+  - key max
+  - pointer -1 (NA)
+- tail
+  - key min
+  - pointer -1 (NA)
+
+**key == priority** (until lecture 8)
+
+- Head and Tail Linked
+- FIFO
+  - 
+- Priority Based
+  - 
+
+### queue table
+- more than one queue per queuetable
+  - ready process
+  - running process
+- There is a null process (PID=0) that is in the **real** queue table
+  - The theoretical queuetable does not include the null process
+
+### List order
+- If the keys are out of order, the scheduling is FIFO
+  - use `enqueue()` and `dequeue()`
+  - `enqueue()` places before the tail
+  - modify 4 pointers
+  
