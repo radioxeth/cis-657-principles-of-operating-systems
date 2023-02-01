@@ -79,3 +79,23 @@ stateDiagram-v2
     READY --> CURRENT:resched()
     CURRENT --> READY:resched()
 ```
+
+### Suspend/Resume
+- `suspend()` temporarily blocks a process in suspended animation
+- stopped in time; cannot run
+- therefore cannot be `CURRENT` or `READY`
+- new state `SUSPENDED`
+- to make ready again: `resume()`
+- we saw this already: `create()` puts the new process in `SUSPENDED` state
+
+
+### New Process State Graph
+
+```mermaid
+stateDiagram-v2
+    READY --> CURRENT:resched()
+    CURRENT --> READY:resched()
+    CURRENT --> SUSPENDED:suspend()
+    SUSPENDED --> READY: resume()
+    READY --> SUSPENDED: suspend()
+```
