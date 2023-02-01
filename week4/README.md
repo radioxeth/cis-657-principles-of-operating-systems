@@ -99,3 +99,126 @@ stateDiagram-v2
     SUSPENDED --> READY: resume()
     READY --> SUSPENDED: suspend()
 ```
+
+### `suspend()`/`resume()` Take and Argument
+- recall that `resched()` implicitly worked on the current process and first in the ready queue
+- `suspend()` and `resume()` can work on any process in `CURRENT` or `READY` stae
+- the current process can suspend itself
+- it's impossible for a process to resume itself.
+
+### Self-Suspension
+- How? Suspend(currpid) would work.
+- But depends on knowledge of how the current process id is stored in the system
+- Better: use `getpid()` system call
+  - `suspend(getpid())`
+- allows us to change the implementation of the OS without changing code that uses result of `getpid()`
+- Abstraction in Action!
+
+
+### Code for Suspend()
+
+```c
+/* suspend.c - suspend */
+
+#include <xinu.h>
+
+/*------------------------------------------------------------------------
+ *  suspend  -  Suspend a process, placing it in hibernation
+ *------------------------------------------------------------------------
+ */
+syscall	suspend(
+	  pid32		pid		/* ID of process to suspend	*/
+	)
+{
+	intmask	mask;			/* saved interrupt mask		*/
+	struct	procent *prptr;		/* ptr to process' table entry	*/
+	pri16	prio;			/* priority to return		*/
+
+	mask = disable();
+	if (isbadpid(pid) || (pid == NULLPROC)) {
+		restore(mask);
+		return SYSERR;
+	}
+
+	/* Only suspend a process that is current or ready */
+
+	prptr = &proctab[pid];
+	if ((prptr->prstate != PR_CURR) && (prptr->prstate != PR_READY)) {
+		restore(mask);
+		return SYSERR;
+	}
+	if (prptr->prstate == PR_READY) {
+		getitem(pid);		    /* remove a ready process	*/
+					    /* from the ready list	*/
+		prptr->prstate = PR_SUSP;
+	} else {
+		prptr->prstate = PR_SUSP;   /* mark the current process	*/
+		resched();		    /* suspended and reschedule	*/
+	}
+	prio = prptr->prprio;
+	restore(mask);
+	return prio;
+}
+```
+
+### What `suspend()` returns
+- `suspend()` returns the priority of the suspended process
+- for a `READY` process, obviously the priority at the time of the `suspended()` call
+- what about the `CURRENT` process?
+  - could record prio at time of call (just before `resched()`)
+
+### Motivation for Saving afer Resumption
+- priority can change while process is suspended
+- allows information to be conveyed about what happened
+- suppose can be awakened by two events
+- assign unique priority to each event
+
+```c
+newprio = suspend(getpid());
+if (newprio==25) {
+    /* ...event 1 occured... */
+} else {
+    /* ...event 2 occured... */
+}
+```
+
+### Code fore `resume()`
+
+```c
+/* resume.c - resume */
+
+#include <xinu.h>
+
+/*------------------------------------------------------------------------
+ *  resume  -  Unsuspend a process, making it ready
+ *------------------------------------------------------------------------
+ */
+pri16	resume(  // still a system call
+	  pid32		pid		/* ID of process to unsuspend	*/
+	)
+{
+	intmask	mask;			/* saved interrupt mask		*/
+	struct	procent *prptr;		/* ptr to process' table entry	*/
+	pri16	prio;			/* priority to return		*/
+
+	mask = disable();
+	if (isbadpid(pid)) {
+		restore(mask);
+		return (pri16)SYSERR;
+	}
+	prptr = &proctab[pid];
+	if (prptr->prstate != PR_SUSP) {
+		restore(mask);
+		return (pri16)SYSERR;
+	}
+	prio = prptr->prprio;		/* record priority to return	*/
+	ready(pid, RESCHED_YES);
+	restore(mask);
+	return prio;
+}
+```
+
+### Not on Reading Xinu Code
+- practice reading the Xinu code as we have done
+- get used to patterns
+- from here on out, we'll cover only the highlights/special features of code
