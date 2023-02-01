@@ -572,3 +572,74 @@ kg_user_pri = PRI_MIN_TIMESHARE + (kg_estcpu/4) + 2*kg_nice;
 load_weight = (2*load)/(2*load+1);
 kg_estcpu = load_weight * kg_estcpu + kg_nice;
 ```
+
+## Week 3 Live Session
+
+### Concurrent processing
+
+### Queue Table vs Process Table
+
+- queue table
+  - place to store **ready processes**
+
+- process table
+  - place to store **all processes**
+
+```
+$ ps
+// prints the process table
+```
+
+### Process State
+
+- current (currently executing)
+- ready (process is ready to execute)
+- waiting
+- receiving
+- sleeping
+- suspended
+
+```c
+/* Process state constants */
+
+#define	PR_FREE		0	/* process table entry is unused	*/
+#define	PR_CURR		1	/* process is currently running		*/
+#define	PR_READY	2	/* process is on ready queue		*/
+#define	PR_RECV		3	/* process waiting for message		*/
+#define	PR_SLEEP	4	/* process is sleeping			*/
+#define	PR_SUSP		5	/* process is suspended			*/
+#define	PR_WAIT		6	/* process is on semaphore queue	*/
+#define	PR_RECTIM	7	/* process is receiving with timeout	*/
+```
+
+- Scheduling only looks at eligable processes
+  - current
+  - ready
+- context switch
+  - moves current process into ready queue
+  - stack is in the memory, takes time
+    - limited context switch
+- FIFO is fair schedule
+- processes with equal priority undergo round robin
+
+### Deferred Rescheduling
+
+- atomic code
+  - turns off the scheduling
+  - some real-time operating systems need to perform operations in a set amount of time. But if they miss the time window, there is no reason to execute to process because it's too late.
+
+### For lab 4
+- to change scheduling technique to FIFO
+  - replace `insert()` in ready.c with `enqueue()`
+
+
+### Semaphore
+
+- concept used for resource allocation
+
+```
+sid32 variable; declare the semaphore variable
+variable = semcreate(number);
+wait(variable); decrement number by 1
+signal(variable); increment the number by 1
+```
