@@ -775,6 +775,7 @@ test_and_set(*lock){
 
 ```mermaid
 stateDiagram-v2
+	directio
 	[*] --> SUSPENDED: create()
 	SUSPENDED --> READY: resume()
     READY --> CURRENT:resched()
@@ -994,3 +995,25 @@ int postinc(int *i){
   - return the current count of a semaphore
 - `signaln(sem, n)`
   - equivalent to n calls to signal, done atomically
+
+
+## Week 4 Live Session
+([top](#directory))
+
+### Seven steps to create a shell command
+
+1) Open main.c
+   - does my program need a global variable or not?
+   - semaphore etc
+   - if need a global semaphore place this global semaphore in semaphore.h
+2) Create a blank new file xsh_{command name}.c
+   - place in shell directory
+   - read from user input
+3) place function in system, {command}.c
+4) open shell.c, place in cmdtab
+5) include\prototypes.h
+   - add `extern void command(...);`
+6) include\shprototypes.h
+7) in compile Makefile
+   - add to tty_cfiles
+   - add to system_cfiles
