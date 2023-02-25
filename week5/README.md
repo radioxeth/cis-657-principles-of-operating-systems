@@ -436,3 +436,122 @@ extern	bpid32	nbpools;	/* current number of allocated pools	*/
 ## 5.8 Paging Policies
 ([top](#directory))
 
+### The Three Policies
+- Fetch
+  - when pages are loaded into memory
+    - pure demand paging: only when touched
+    - prefetch: use locality of reference to pull in extra pages
+- Prefetch
+  - where in memory the page is placed (relavent becuase of cache effects; see page coloring)
+- Replacement
+  - which pages are rmeoved from main memory there are no free frames
+
+### Page Replacement
+- Most ciritcal aspect of the paging system
+  - good choices minimize page faults
+  - poor choices induce thrashing
+- Page reference string: sequence of pages referenced over a time interval
+- Page fault rate (PFR): page faults per time interval
+- Algorithm choice depends on expected application behavior, information available from the system, and ease of implementation
+
+### Page Replacement II
+- global vs local page replacement
+  - global: any page can be a victim
+  - local: only my pages can be victim
+- Thrashing
+  - excessive page traffic between main memory and backing store
+  - Caused by choosing a victim page that wil be needed too soon, or because a process doesn't have enough memory for its working set
+
+### Locality of Reference
+- key concept in page replacement
+- **Temporal LoR**: We are likely to reuse something we used in the recent past
+  - While loop
+- **Spatial LoR**: We are likely to use things near what we have used
+  - serial processing of array entries
+
+### Working Sets
+- based on concept of locality of reference
+  - processes will use a certain set of pages for a period of time, then change to new set
+- the *k* unique pages used in the last *n* reference in the page reference string
+- If we keep a process's working set in main memory, it won't page fault until it changes phases
+- high and low watermark techniques for approximating the working set
+
+### Page-Replacement Algorithms
+- FIFO
+  - simple
+  - doesn't do well to reduce page faults
+- Belady's MIN
+  - Guaranteed optimal
+  - *Replace the page that will next be needed farthest in the future*
+***
+- Least recently used (LRU) [MRU]
+  - *Replace the page that was last needed farthest in the past*
+- Least frequently used (LFU) [MFU]
+  - *Replace the page that has been needed least over the last n page references*
+  - Add 1 each time a page is used, divide by 2 when not being used
+- Approximations to the above (e.g. clock)
+
+
+## Week 5 Live Session
+([top](#directory))
+
+### midterm
+- review lab 1, 2, 3
+- resolve breakout problems
+- know the state diagram
+
+### For lab 5
+- to change scheduling technique to FIFO
+  - replace `insert()` in ready.c with `enqueue()`
+
+
+### regions of memory
+- text
+- data
+- bss
+- free space
+  - stack grows from high to low
+  - heap  groms from low to high
+
+### low-level memory management in xinu
+- getstk  - allocate stack space when a process is created
+- freestk - release stack when a process terminates
+- getmem  - allocate heap storage on demand
+- freemem - releaes heap storage as requested
+
+### low level memory problems
+- packet flooding attack
+- solution: divid into multiple partitions (buffer pools)
+
+### sleep
+
+if you put more than one process into sleep
+ and you wake both up only one continues
+ 
+```c
+ if ( (slnonempty = nonempty(sleepq)) == TRUE ) {
+	sltop = &queuetab[firstkey(sleepq)].qkey;//should be firstid(sleepq)
+}
+```
+
+### low-level messaging system
+
+```mermaid
+stateDiagram-v2
+	[*] --> SUSPENDED: create()
+	SUSPENDED --> READY: resume()
+    READY --> CURRENT:resched()
+	WAITING --> READY:signal()
+    CURRENT --> READY:resched()
+	READY --> SUSPENDED: suspend()
+	CURRENT --> WAITING:wait()
+    CURRENT --> SUSPENDED:suspend()
+```
+
+Low level messaging system, xinu cannot send more than one message at a time per process. 
+
+Perhaps use a buffer for messages instead of throwing a SYSERR
+
+###
+- create three processes
+  - show that these processes are in the suspended state by typing the ps command

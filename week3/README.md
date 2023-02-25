@@ -628,7 +628,7 @@ $ ps
   - turns off the scheduling
   - some real-time operating systems need to perform operations in a set amount of time. But if they miss the time window, there is no reason to execute to process because it's too late.
 
-### For lab 4
+### For lab 5
 - to change scheduling technique to FIFO
   - replace `insert()` in ready.c with `enqueue()`
 
