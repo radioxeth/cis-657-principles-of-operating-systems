@@ -10,8 +10,11 @@ This course designs and implements changes to the Xinu operating system, found [
 - [Week 3 CPU Scheduling](/week3/README.md#week-3-cpu-scheduling)
 - [Week 4 Process Coordination](/week4/README.md#week-4-process-coordination)
 - [Week 5 Memory Management](/week5/README.md#week-5-memory-management)
-- **[Week 6 Message Passing](/week6/README.md#week-6-message-passing)**
-- [Week 7 Interrupts and Devices](/week7/README.md#week-7-interrupts-and-devices)
+- [Week 6 Message Passing](/week6/README.md#week-6-message-passing)
+- **[Week 7 Interrupts and Devices](/week7/README.md#week-7-interrupts-and-devices)**
 - [Week 8 Devices](/week8/README.md#week-8-devices)
 - [Week 9 Files](/week9/README.md#week-9-devices)
 - [Week 10 Develop an Operating system](/week10/README.md#week-10-develop-an-operating-system)
+
+### Xinu Process State Diagram
+<img src="xinu-process-state-diagram.png"/>
