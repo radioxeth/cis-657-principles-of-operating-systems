@@ -17,4 +17,5 @@ This course designs and implements changes to the Xinu operating system, found [
 - [Week 10 Develop an Operating system](/week10/README.md#week-10-develop-an-operating-system)
 
 ### Xinu Process State Diagram
+
 <img src="xinu-process-state-diagram.png"/>
